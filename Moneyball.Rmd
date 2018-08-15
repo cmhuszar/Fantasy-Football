@@ -1,0 +1,173 @@
+---
+title: "Moneyball"
+author: "Chris Huszar"
+date: "August 13, 2018"
+output: word_document
+---
+#Fantasy Football Analysis
+```{r}
+
+#Load Packages
+require('tidyr')
+require('stringr')
+require('ggplot2')
+
+#Read in Data
+datapath<-"C:/Users/cmhus/iCloudDrive/Analytics Projects/Football Data/"
+data<-read.csv(paste(datapath,"2018 Fantasy Football QB RB WR TE.csv",sep="/"))
+auctionData<-read.csv(paste(datapath,"2017 Draft Results.csv",sep="/"))
+
+#Scrub Data
+auctionData$auctionPrice<-as.numeric(gsub("[[:punct:]]", " ", auctionData$auctionPrice))
+
+splitNames<-data.frame(str_split_fixed(auctionData$playerTeamPosition, ",", 2))
+splitNamesTeam<-str_trim(substr(splitNames$X2,1,4))
+splitNamesPos<-str_trim(substr(splitNames$X2,5,7))
+
+auctionData$playerName<-splitNames$X1
+auctionData$team<-splitNamesTeam
+auctionData$pos<-splitNamesPos
+auctionData<-subset(auctionData[,c(4,5,6,1,3)],team!="" & pos!="K")
+
+#Set league info
+qbStart<-1
+rbStart<-2
+wrStart<-3
+teStart<-1
+
+teams<-8
+budget<-200
+
+#Subset Positions on 2017 points data
+qbData<-subset(data,POS=="QB")
+rbData<-subset(data,POS=="RB")
+wrData<-subset(data,POS=="WR")
+teData<-subset(data,POS=="TE")
+
+#Order by PTS
+qbData <- qbData[order(-qbData$PTS), ]
+rbData <- rbData[order(-rbData$PTS), ]
+wrData <- wrData[order(-wrData$PTS), ]
+teData <- teData[order(-teData$PTS), ]
+
+#Subset Positions on 2017 auction data
+qbAucData<-subset(auctionData,pos=="QB")
+rbAucData<-subset(auctionData,pos=="RB")
+wrAucData<-subset(auctionData,pos=="WR")
+teAucData<-subset(auctionData,pos=="TE")
+
+#Order by 2017 Auction prices
+qbAucData <- qbAucData[order(-qbAucData$auctionPrice), ]
+rbAucData <- rbAucData[order(-rbAucData$auctionPrice), ]
+wrAucData <- wrAucData[order(-wrAucData$auctionPrice), ]
+teAucData <- teAucData[order(-teAucData$auctionPrice), ]
+
+#look at histograms of each position pts distribution
+par(mfrow=c(2,2))
+hist(qbData$PTS, breaks = 20)
+hist(rbData$PTS, breaks = 20)
+hist(wrData$PTS, breaks = 20)
+hist(teData$PTS, breaks = 20)
+
+```
+
+
+```{r}
+#View stacked historgam to get level of pts and number of players for each position and pts level
+par(mfrow=c(1,2))
+ggplot(data, aes(x=PTS, fill=POS)) +
+  geom_histogram()
+
+ggplot(auctionData, aes(x=auctionPrice, fill=pos)) +
+  geom_histogram()
+
+```
+
+```{r}
+par(mfrow=c(1,2))
+ggplot(data, aes(y=PTS,x=POS)) +
+  geom_point()
+
+ggplot(auctionData, aes(y=auctionPrice,x=pos)) +
+  geom_point()
+
+```
+
+```{r}
+par(mfrow=c(1,2))
+boxplot(PTS~POS,data=data, main="PTS By Position", 
+        xlab="Position", ylab="2017 Fantasy Points")
+
+boxplot(auctionPrice~pos,data=auctionData, main="Draft Prices By Position", 
+        xlab="Position", ylab="2017 Auction Prices")
+
+```
+
+```{r}
+#Look at just the starting spots by position
+qbDataTop<-head(qbData,teams*qbStart)
+rbDataTop<-head(rbData,teams*rbStart)
+wrDataTop<-head(wrData,teams*wrStart)
+teDataTop<-head(teData,teams*teStart)
+
+topStarters<-rbind(qbDataTop,rbDataTop,wrDataTop,teDataTop)
+ggplot(topStarters, aes(x=PTS, fill=POS)) +
+  geom_histogram()
+
+#Now the same with auction values
+qbAucDataTop<-head(qbAucData,teams*qbStart)
+rbAucDataTop<-head(rbAucData,teams*rbStart)
+wrAucDataTop<-head(wrAucData,teams*wrStart)
+teAucDataTop<-head(teAucData,teams*teStart)
+
+topAucStarters<-rbind(qbAucDataTop,rbAucDataTop,wrAucDataTop,teAucDataTop)
+ggplot(topAucStarters, aes(x=auctionPrice, fill=pos)) +
+  geom_histogram()
+```
+
+
+```{r}
+#Check the spread in PTS of the starters by position
+qbspread<-head(qbDataTop$PTS,1)-tail(qbDataTop$PTS,1)
+rbspread<-head(rbDataTop$PTS,1)-tail(rbDataTop$PTS,1)
+wrspread<-head(wrDataTop$PTS,1)-tail(wrDataTop$PTS,1)
+tespread<-head(teDataTop$PTS,1)-tail(teDataTop$PTS,1)
+
+starterspread<-data.frame(cbind(c('QB','RB','WR','TE'),rbind(qbspread,rbspread,wrspread,tespread)))
+rownames(starterspread)<-NULL
+colnames(starterspread)<-c('Position','Pts Spread')
+
+starterspread
+
+par(mfrow=c(1,1))
+boxplot(PTS~POS,data=topStarters, main="2017 PTS for Starters By Position", 
+        xlab="Position", ylab="2017 PTS")
+
+#Another look
+ggplot(topStarters, aes(y=PTS,x=POS)) +
+  geom_point() +
+  ggtitle("Starter Points") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+startersPtsValue<-cbind(topStarters[,c('POS','PTS')],'auctionPrice'=topAucStarters[,'auctionPrice'])
+
+startersPtsValue$CostPerPoint<-startersPtsValue$auctionPrice/startersPtsValue$PTS
+startersPtsValue
+
+ggplot(startersPtsValue, aes(POS, auctionPrice ,colour =PTS)) + 
+  geom_point(size=5) +
+  scale_colour_gradientn(colours=rainbow(4)) +
+  ggtitle("Auction Price to Points: Starters") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+ggplot(data=startersPtsValue, aes(x=PTS, y=CostPerPoint, group = POS, colour = POS)) +
+    geom_line() +
+    geom_point( size=4, shape=21, fill="white")
+  
+ggplot(data=startersPtsValue, aes(x=CostPerPoint, y=PTS, group = POS, colour = POS)) +
+    geom_line() +
+    geom_point( size=4, shape=21, fill="white")
+  
+ 
+```
