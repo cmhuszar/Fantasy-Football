@@ -1,13 +1,13 @@
 # Fantasy Football Auction Draft Strategy
 A project on fantasy football.
 
-##Project Motivation:
+## Project Motivation:
 The term moneyball was made famous by a book and movie about the Oakland Athletics baseball team.  In short, it foccused on using analytical techniques to assemble a competitive baseball team for a low budget market team.  The purpose of this project is to apply the same general approach to fantasy football.
 
-##Problem:  
+## Problem:  
 Each year, fantasy football starts out with a draft.  In our league, the draft is an auction.  This means each team (8 teams total) get a $200 budget to bid on players.  Teams have nine starting positions (1 QB, 2 RB's, 3 WR's, 1 TE, 1 Defense/Special Teams, and 1 Kicker), and seven bench positions.  The goal of this analysis is to find a draft strategy that will maximize fantasy points and stay within the $200 budget.   
 
-##Assumptions:
+## Assumptions:
 
 - This analysis only looks at 7 starting positions.  I don't evaluate defense and kickers.
 
@@ -20,7 +20,7 @@ Each year, fantasy football starts out with a draft.  In our league, the draft i
 - I assume that the player projected rankings directly align with the spending patterns for each position in the previous     year.
 
 
-##Structure:
+## Structure:
 1.  The data files used in the analysis are:
 
     Filename                          | Description
@@ -34,7 +34,7 @@ Each year, fantasy football starts out with a draft.  In our league, the draft i
 
 3.  Position Spending Optimization 2018.xlsx is an optimization solver through Excel that figures out the best roster based on the 2017 auction results and fantasy results.
 
-##Next Steps
+## Next Steps
 * Do optimization in R
 * Add in risk
 * Add web scraping for data generation
