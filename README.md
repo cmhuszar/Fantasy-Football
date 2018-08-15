@@ -38,6 +38,7 @@ Each year, fantasy football starts out with a draft.  In our league, the draft i
 * Do optimization in R
 * Add in risk
 * Add web scraping for data generation
+* Use LaTeX for results.
 * Run on AWS
 * Recreate using Python
 
